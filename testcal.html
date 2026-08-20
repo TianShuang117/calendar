@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✦ 淡紫日历 ✦</title>
+    <style>
+        :root {
+            --lavender-light: #f0e6ff;
+            --lavender-soft: #d4c4f0;
+            --lavender-medium: #b8a0d8;
+            --lavender-deep: #9a7cc8;
+            --lavender-dark: #7a5fa8;
+            --white: #ffffff;
+            --cream: #faf8ff;
+            --text: #5a4a6a;
+            --text-light: #8a7a9a;
+            --gold: #e6c840;
+            --gold-light: #f5e6a0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f5f0ff 0%, #faf8ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #5a4a6a;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 24px; }
+        .header h1 { font-size: 2.2rem; font-weight: 300; letter-spacing: 2px; color: var(--lavender-dark); margin-bottom: 8px; }
+        .header .subtitle { color: var(--text-light); font-size: 0.95rem; }
+        .stats-bar { display: flex; justify-content: center; gap: 32px; margin-bottom: 24px; flex-wrap: wrap; }
+        .stat-card { background: var(--white); border-radius: 16px; padding: 16px 28px; box-shadow: 0 4px 20px rgba(154,124,200,0.08); display: flex; align-items: center; gap: 12px; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+        .stat-icon.purple { background: var(--lavender-light); }
+        .stat-icon.gold { background: #fff8e0; }
+        .stat-value { font-size: 1.4rem; font-weight: 600; color: var(--lavender-dark); }
+        .stat-label { font-size: 0.8rem; color: var(--text-light); }
+        .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--white); padding: 12px 24px; border-radius: 16px; box-shadow: 0 2px 12px rgba(154,124,200,0.06); }
+        .nav-btn { background: var(--lavender-light); border: none; width: 36px; height: 36px; border-radius: 10px; cursor: pointer; font-size: 1.1rem; color: var(--lavender-dark); transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .nav-btn:hover { background: var(--lavender-soft); transform: scale(1.05); }
+        .month-title { font-size: 1.3rem; font-weight: 500; color: var(--lavender-dark); letter-spacing: 1px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 24px; }
+        .weekday-header { text-align: center; padding: 12px 4px; font-size: 0.85rem; color: var(--text-light); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
+        .day-cell { background: var(--white); border-radius: 14px; min-height: 110px; padding: 10px; cursor: pointer; transition: all 0.25s ease; position: relative; border: 2px solid transparent; box-shadow: 0 2px 8px rgba(154,124,200,0.04); }
+        .day-cell:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(154,124,200,0.12); border-color: var(--lavender-soft); }
+        .day-cell.completed { background: linear-gradient(135deg, #f0e6ff 0%, #e6d8f8 100%); border-color: var(--lavender-medium); }
+        .day-cell.completed .day-num { color: var(--lavender-dark); font-weight: 600; }
+        .day-cell.today { border-color: var(--lavender-deep); box-shadow: 0 0 0 3px rgba(154,124,200,0.15); }
+        .day-num { font-size: 0.9rem; color: var(--text-light); margin-bottom: 6px; display: block; }
+        .day-plan { font-size: 0.75rem; color: var(--text); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+        .day-check { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--lavender-soft); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--white); transition: all 0.2s; }
+        .day-cell.completed .day-check { background: var(--lavender-deep); border-color: var(--lavender-deep); }
+        .day-cell.empty { background: transparent; box-shadow: none; cursor: default; border: none; }
+        .day-cell.empty:hover { transform: none; }
+        .shop-btn { position: fixed; bottom: 24px; right: 24px; background: linear-gradient(135deg, var(--lavender-deep), var(--lavender-dark)); color: white; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; box-shadow: 0 6px 24px rgba(122,95,168,0.3); transition: all 0.3s; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        .shop-btn:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 8px 32px rgba(122,95,168,0.4); }
+        .shop-btn .badge { position: absolute; top: -4px; right: -4px; background: var(--gold); color: #7a6a20; font-size: 0.7rem; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(90,74,106,0.3); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 200; opacity: 0; transition: opacity 0.3s; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal { background: var(--white); border-radius: 24px; padding: 28px; width: 90%; max-width: 420px; box-shadow: 0 20px 60px rgba(90,74,106,0.2); transform: scale(0.9); transition: transform 0.3s; max-height: 85vh; overflow-y: auto; }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal h2 { color: var(--lavender-dark); margin-bottom: 16px; font-weight: 500; font-size: 1.3rem; }
+        .modal-input { width: 100%; padding: 12px 16px; border: 2px solid var(--lavender-light); border-radius: 12px; font-size: 0.95rem; color: var(--text); margin-bottom: 12px; outline: none; transition: border-color 0.2s; font-family: inherit; }
+        .modal-input:focus { border-color: var(--lavender-medium); }
+        .modal-textarea { min-height: 80px; resize: vertical; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+        .btn { flex: 1; padding: 12px; border-radius: 12px; border: none; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; font-weight: 500; font-family: inherit; }
+        .btn-primary { background: linear-gradient(135deg, var(--lavender-deep), var(--lavender-dark)); color: white; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background: var(--lavender-light); color: var(--lavender-dark); }
+        .btn-secondary:hover { background: var(--lavender-soft); }
+        .btn-gold { background: linear-gradient(135deg, #f5e6a0, var(--gold)); color: #7a6a20; }
+        .btn-gold:hover { opacity: 0.9; }
+        .btn-danger { background: #ffe0e0; color: #c44; }
+        .btn-danger:hover { background: #ffd0d0; }
+        .check-toggle { display: flex; align-items: center; gap: 8px; margin: 12px 0; padding: 10px; background: var(--lavender-light); border-radius: 10px; cursor: pointer; }
+        .check-toggle input { width: 18px; height: 18px; accent-color: var(--lavender-deep); }
+        .check-toggle label { cursor: pointer; font-size: 0.9rem; color: var(--text); }
+        .shop-modal { max-width: 560px; }
+        .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; }
+        .shop-item { background: linear-gradient(135deg, var(--cream), var(--white)); border: 2px solid var(--lavender-light); border-radius: 16px; padding: 16px; text-align: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; }
+        .shop-item:hover { border-color: var(--lavender-medium); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(154,124,200,0.1); }
+        .shop-item .item-emoji { font-size: 2.2rem; margin-bottom: 8px; display: block; }
+        .shop-item .item-name { font-weight: 600; color: var(--lavender-dark); font-size: 0.9rem; margin-bottom: 4px; }
+        .shop-item .item-desc { font-size: 0.75rem; color: var(--text-light); margin-bottom: 10px; }
+        .shop-item .item-price { background: #fff8e0; color: #9a8a30; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; display: inline-block; }
+        .shop-item .item-price::before { content: '🪙 '; }
+        .shop-item .owned-badge { position: absolute; top: 8px; right: 8px; background: var(--lavender-medium); color: white; font-size: 0.65rem; padding: 3px 10px; border-radius: 10px; font-weight: 600; }
+        .shop-item.custom { border-color: #c8b8e0; background: linear-gradient(135deg, #f8f5ff, #fff); }
+        .shop-item.custom .tag-custom { position: absolute; top: 8px; left: 8px; background: var(--lavender-soft); color: var(--lavender-dark); font-size: 0.6rem; padding: 2px 8px; border-radius: 8px; }
+        .shop-item .refund-btn { position: absolute; bottom: 8px; right: 8px; background: #ffe0e0; color: #c44; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; opacity: 0; transition: all 0.2s; z-index: 5; }
+        .shop-item:hover .refund-btn { opacity: 1; }
+        .shop-item:hover .refund-btn:hover { background: #c44; color: white; transform: scale(1.1); }
+        .inventory { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--lavender-light); }
+        .inventory h3 { color: var(--lavender-dark); font-size: 1rem; margin-bottom: 10px; font-weight: 500; }
+        .inventory-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .inv-tag { background: var(--lavender-light); color: var(--lavender-dark); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; }
+        .toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-20px); background: var(--white); color: var(--lavender-dark); padding: 14px 28px; border-radius: 16px; box-shadow: 0 8px 32px rgba(154,124,200,0.2); font-size: 0.95rem; z-index: 300; opacity: 0; transition: all 0.4s; pointer-events: none; border: 1px solid var(--lavender-light); }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.gold { background: linear-gradient(135deg, #fff8e0, #f5e6a0); color: #7a6a20; border-color: var(--gold-light); }
+        .toast.refund { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); color: #2e7d32; border-color: #a5d6a7; }
+        .progress-ring { width: 50px; height: 50px; }
+        .progress-ring circle { fill: none; stroke-width: 4; }
+        .progress-ring .bg { stroke: var(--lavender-light); }
+        .progress-ring .progress { stroke: var(--lavender-deep); stroke-linecap: round; transition: stroke-dashoffset 0.5s; }
+        .month-progress { display: flex; align-items: center; gap: 12px; }
+        .ai-thinking { background: var(--lavender-light); border-radius: 12px; padding: 16px; margin: 12px 0; text-align: center; }
+        .ai-thinking .dots::after { content: ''; animation: dots 1.5s steps(4, end) infinite; }
+        @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+        .ai-result { background: linear-gradient(135deg, #f0e6ff, #e6d8f8); border-radius: 12px; padding: 16px; margin: 12px 0; border: 1px solid var(--lavender-soft); }
+        .ai-result .price-tag { font-size: 1.6rem; font-weight: 700; color: var(--lavender-dark); margin: 8px 0; }
+        .ai-result .reason { font-size: 0.85rem; color: var(--text); line-height: 1.5; }
+        .emoji-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .emoji-option { width: 40px; height: 40px; border-radius: 10px; border: 2px solid var(--lavender-light); background: var(--white); cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .emoji-option:hover, .emoji-option.selected { border-color: var(--lavender-deep); background: var(--lavender-light); transform: scale(1.1); }
+        .add-custom-btn { width: 100%; padding: 14px; margin-bottom: 16px; background: linear-gradient(135deg, #f0e6ff, #e6d8f8); border: 2px dashed var(--lavender-medium); border-radius: 14px; color: var(--lavender-dark); font-size: 0.95rem; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+        .add-custom-btn:hover { background: var(--lavender-soft); border-style: solid; }
+        .delete-btn { position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border-radius: 50%; background: #ffe0e0; color: #c44; border: none; cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; z-index: 5; }
+        .shop-item.custom:hover .delete-btn { opacity: 1; }
+        .item-actions { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+        .item-action-btn { padding: 5px 12px; border-radius: 8px; border: none; font-size: 0.75rem; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .item-action-btn.buy { background: var(--lavender-light); color: var(--lavender-dark); }
+        .item-action-btn.buy:hover { background: var(--lavender-medium); color: white; }
+        .item-action-btn.refund { background: #ffe0e0; color: #c44; }
+        .item-action-btn.refund:hover { background: #c44; color: white; }
+        @media (max-width: 600px) {
+            .calendar-grid { gap: 6px; }
+            .day-cell { min-height: 80px; padding: 6px; }
+            .shop-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.6rem; }
+            .shop-item .refund-btn { opacity: 1; }
+            .delete-btn { opacity: 1; }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✦ 淡紫日历 ✦</h1>
+            <p class="subtitle">每天一小步，积累大成就</p>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-icon purple">📅</div>
+                <div>
+                    <div class="stat-value" id="monthCompleted">0</div>
+                    <div class="stat-label">本月完成天数</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="month-progress">
+                    <svg class="progress-ring" viewBox="0 0 50 50">
+                        <circle class="bg" cx="25" cy="25" r="20"></circle>
+                        <circle class="progress" id="progressCircle" cx="25" cy="25" r="20" stroke-dasharray="125.6" stroke-dashoffset="125.6"></circle>
+                    </svg>
+                    <div>
+                        <div class="stat-value" id="completionRate">0%</div>
+                        <div class="stat-label">完成率</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon gold">🪙</div>
+                <div>
+                    <div class="stat-value" id="coinCount">0</div>
+                    <div class="stat-label">金币余额</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-bar">
+            <button class="nav-btn" onclick="changeMonth(-1)">◀</button>
+            <div class="month-title" id="monthDisplay"></div>
+            <button class="nav-btn" onclick="changeMonth(1)">▶</button>
+        </div>
+
+        <div class="calendar-grid" id="calendar"></div>
+    </div>
+
+    <button class="shop-btn" onclick="openShop()">
+        🏪
+        <span class="badge" id="shopBadge" style="display:none">!</span>
+    </button>
+
+    <!-- Day Modal -->
+    <div class="modal-overlay" id="dayModal">
+        <div class="modal">
+            <h2 id="dayModalTitle">计划详情</h2>
+            <input type="text" class="modal-input" id="planTitle" placeholder="计划标题（如：晨跑5公里）">
+            <textarea class="modal-input modal-textarea" id="planDesc" placeholder="详细描述..."></textarea>
+            <div class="check-toggle">
+                <input type="checkbox" id="planDone">
+                <label for="planDone">今日计划已完成 ✓</label>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('dayModal')">取消</button>
+                <button class="btn btn-primary" onclick="savePlan()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shop Modal -->
+    <div class="modal-overlay" id="shopModal">
+        <div class="modal shop-modal">
+            <h2>🏪 金币商城</h2>
+            <p style="color: var(--text-light); font-size: 0.85rem; margin-bottom: 12px;">用你积累的金币兑换心仪好物吧～ 支持重复购买与退款</p>
+            <button class="add-custom-btn" onclick="openCustomItemModal()">✨ 添加自定义商品（AI定价）</button>
+            <div class="shop-grid" id="shopGrid"></div>
+            <div class="inventory" id="inventorySection" style="display:none">
+                <h3>🎒 我的背包</h3>
+                <div class="inventory-tags" id="inventoryList"></div>
+            </div>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeModal('shopModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Item Modal -->
+    <div class="modal-overlay" id="customItemModal">
+        <div class="modal">
+            <h2>✨ 自定义商品</h2>
+            <p style="color: var(--text-light); font-size: 0.8rem; margin-bottom: 12px;">输入商品信息，AI估价师会为你定价（80金币起）</p>
+
+            <div style="margin-bottom: 8px; font-size: 0.85rem; color: var(--text);">选择图标：</div>
+            <div class="emoji-picker" id="emojiPicker">
+                <div class="emoji-option selected" data-emoji="🎁">🎁</div>
+                <div class="emoji-option" data-emoji="🧸">🧸</div>
+                <div class="emoji-option" data-emoji="🍰">🍰</div>
+                <div class="emoji-option" data-emoji="🎧">🎧</div>
+                <div class="emoji-option" data-emoji="👕">👕</div>
+                <div class="emoji-option" data-emoji="💎">💎</div>
+                <div class="emoji-option" data-emoji="🌿">🌿</div>
+                <div class="emoji-option" data-emoji="🔮">🔮</div>
+            </div>
+
+            <input type="text" class="modal-input" id="customName" placeholder="商品名称（如：限量手办）" maxlength="20">
+            <textarea class="modal-input modal-textarea" id="customDesc" placeholder="商品描述，越详细AI定价越精准..." maxlength="100"></textarea>
+
+            <div id="aiPricingArea" style="display:none">
+                <div class="ai-thinking" id="aiThinking">
+                    <div style="font-size: 1.2rem; margin-bottom: 4px;">🤖 AI估价师思考中<span class="dots"></span></div>
+                    <div style="font-size: 0.8rem; color: var(--text-light);">正在分析商品稀有度、实用性与市场需求</div>
+                </div>
+                <div class="ai-result" id="aiResult" style="display:none">
+                    <div style="font-size: 0.85rem; color: var(--text-light);">AI估价结果</div>
+                    <div class="price-tag" id="aiPrice">0 🪙</div>
+                    <div class="reason" id="aiReason"></div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('customItemModal')">取消</button>
+                <button class="btn btn-primary" id="btnPrice" onclick="startAIPricing()">🤖 AI定价</button>
+                <button class="btn btn-gold" id="btnAdd" onclick="addCustomItem()" style="display:none">确认上架</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refund Confirm Modal -->
+    <div class="modal-overlay" id="refundModal">
+        <div class="modal">
+            <h2>↩️ 申请退款</h2>
+            <div id="refundInfo" style="text-align: center; margin: 16px 0;"></div>
+            <p style="color: var(--text-light); font-size: 0.85rem; text-align: center; margin-bottom: 16px;">退款将返还全部金币，该商品购买次数减1</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('refundModal')">取消</button>
+                <button class="btn btn-danger" onclick="confirmRefund()">确认退款</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===== Data & State =====
+        const COINS_PER_TASK = 20;
+        let currentDate = new Date();
+        let selectedDate = null;
+        let selectedEmoji = '🎁';
+        let currentAIPrice = 0;
+        let pendingRefundItem = null;
+
+        // Load from localStorage or init
+        let calendarData = JSON.parse(localStorage.getItem('lavenderCalendar')) || {};
+        let coins = parseInt(localStorage.getItem('lavenderCoins')) || 0;
+        let customItems = JSON.parse(localStorage.getItem('lavenderCustomItems')) || [];
+
+        // Inventory: { itemId: count } - migrate from old array format
+        let inventory = {};
+        const rawInv = localStorage.getItem('lavenderInventory');
+        if (rawInv) {
+            try {
+                const parsed = JSON.parse(rawInv);
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(id => { inventory[id] = (inventory[id] || 0) + 1; });
+                } else if (typeof parsed === 'object') {
+                    inventory = parsed;
+                }
+            } catch(e) { inventory = {}; }
+        }
+
+        const defaultItems = [
+            { id: 'coffee', emoji: '☕', name: '薰衣草拿铁', desc: '一杯温暖的午后咖啡', price: 100, isDefault: true },
+            { id: 'book', emoji: '📖', name: '紫色笔记本', desc: '记录更多美好时光', price: 200, isDefault: true },
+            { id: 'plant', emoji: '🪴', name: '多肉盆栽', desc: '桌面上的小治愈', price: 300, isDefault: true },
+            { id: 'candle', emoji: '🕯️', name: '香薰蜡烛', desc: '薰衣草香，助眠安神', price: 400, isDefault: true },
+            { id: 'music', emoji: '🎵', name: '白噪音专辑', desc: '专注与放松的背景音', price: 500, isDefault: true },
+            { id: 'blanket', emoji: '🛋️', name: '毛绒毯子', desc: '周末窝在沙发里', price: 600, isDefault: true },
+            { id: 'slipper', emoji: '🩴', name: '云朵拖鞋', desc: '像踩在棉花上一样', price: 350, isDefault: true },
+            { id: 'tea', emoji: '🍵', name: '花茶礼盒', desc: '八种口味，每日不同', price: 450, isDefault: true },
+            { id: 'pillow', emoji: '🌙', name: '记忆枕', desc: '给你一个好梦', price: 800, isDefault: true },
+            { id: 'bag', emoji: '🎒', name: '帆布托特包', desc: '淡紫色，文艺百搭', price: 550, isDefault: true },
+            { id: 'pen', emoji: '✒️', name: '钢笔套装', desc: '书写仪式感', price: 700, isDefault: true },
+            { id: 'cookie', emoji: '🍪', name: '手工曲奇', desc: '奖励自己的甜蜜', price: 150, isDefault: true }
+        ];
+
+        function getAllItems() {
+            return [...defaultItems, ...customItems];
+        }
+
+        function getOwnedCount(itemId) {
+            return inventory[itemId] || 0;
+        }
+
+        // ===== Calendar Logic =====
+        function getMonthKey(d) {
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        }
+        function getDayKey(d, day) {
+            return `${getMonthKey(d)}-${String(day).padStart(2,'0')}`;
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month+1, 0).getDate();
+            const today = new Date();
+            const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+            const todayDay = today.getDate();
+
+            document.getElementById('monthDisplay').textContent = `${year}年 ${month+1}月`;
+
+            const grid = document.getElementById('calendar');
+            grid.innerHTML = '';
+
+            const weekdays = ['日','一','二','三','四','五','六'];
+            weekdays.forEach(w => {
+                const el = document.createElement('div');
+                el.className = 'weekday-header';
+                el.textContent = w;
+                grid.appendChild(el);
+            });
+
+            for (let i = 0; i < firstDay; i++) {
+                const el = document.createElement('div');
+                el.className = 'day-cell empty';
+                grid.appendChild(el);
+            }
+
+            let completedCount = 0;
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const key = getDayKey(currentDate, day);
+                const data = calendarData[key] || {};
+                const isToday = isCurrentMonth && day === todayDay;
+                const isCompleted = data.done;
+                if (isCompleted) completedCount++;
+
+                const el = document.createElement('div');
+                el.className = 'day-cell' + (isCompleted ? ' completed' : '') + (isToday ? ' today' : '');
+                el.onclick = () => openDay(day);
+
+                el.innerHTML = `
+                    <span class="day-num">${day}</span>
+                    ${data.title ? `<div class="day-plan">${data.title}</div>` : ''}
+                    <div class="day-check">${isCompleted ? '✓' : ''}</div>
+                `;
+                grid.appendChild(el);
+            }
+
+            document.getElementById('monthCompleted').textContent = completedCount;
+            document.getElementById('coinCount').textContent = coins;
+            const rate = daysInMonth > 0 ? Math.round((completedCount / daysInMonth) * 100) : 0;
+            document.getElementById('completionRate').textContent = rate + '%';
+
+            const circle = document.getElementById('progressCircle');
+            const circumference = 2 * Math.PI * 20;
+            const offset = circumference - (rate / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        // ===== Day Modal =====
+        function openDay(day) {
+            selectedDate = day;
+            const key = getDayKey(currentDate, day);
+            const data = calendarData[key] || {};
+            document.getElementById('dayModalTitle').textContent = `${currentDate.getFullYear()}年${currentDate.getMonth()+1}月${day}日`;
+            document.getElementById('planTitle').value = data.title || '';
+            document.getElementById('planDesc').value = data.desc || '';
+            document.getElementById('planDone').checked = data.done || false;
+            document.getElementById('dayModal').classList.add('active');
+        }
+
+        function savePlan() {
+            const key = getDayKey(currentDate, selectedDate);
+            const oldData = calendarData[key] || {};
+            const wasDone = oldData.done;
+            const nowDone = document.getElementById('planDone').checked;
+
+            calendarData[key] = {
+                title: document.getElementById('planTitle').value.trim(),
+                desc: document.getElementById('planDesc').value.trim(),
+                done: nowDone
+            };
+
+            if (nowDone && !wasDone) {
+                coins += COINS_PER_TASK;
+                showToast(`🎉 计划完成！获得 ${COINS_PER_TASK} 金币`, 'gold');
+            } else if (!nowDone && wasDone) {
+                coins -= COINS_PER_TASK;
+                showToast('计划已取消，金币已回收');
+            }
+
+            saveData();
+            closeModal('dayModal');
+            renderCalendar();
+        }
+
+        // ===== Shop =====
+        function openShop() {
+            const grid = document.getElementById('shopGrid');
+            grid.innerHTML = '';
+
+            getAllItems().forEach(item => {
+                const count = getOwnedCount(item.id);
+                const isCustom = !item.isDefault;
+                const el = document.createElement('div');
+                el.className = 'shop-item' + (isCustom ? ' custom' : '');
+
+                let html = '';
+                if (isCustom) {
+                    html += '<span class="tag-custom">自定义</span>';
+                    html += `<button class="delete-btn" onclick="event.stopPropagation(); deleteCustomItem('${item.id}')">×</button>`;
+                }
+
+                html += `<span class="item-emoji">${item.emoji}</span>`;
+                html += `<div class="item-name">${item.name}</div>`;
+                html += `<div class="item-desc">${item.desc}</div>`;
+
+                if (count > 0) {
+                    html += `<span class="owned-badge">已购 ${count}次</span>`;
+                }
+
+                html += `<div class="item-price">${item.price}</div>`;
+
+                html += `<div class="item-actions">`;
+                html += `<button class="item-action-btn buy" onclick="event.stopPropagation(); buyItem('${item.id}')">购买</button>`;
+                if (count > 0) {
+                    html += `<button class="item-action-btn refund" onclick="event.stopPropagation(); openRefund('${item.id}')">退款</button>`;
+                }
+                html += `</div>`;
+
+                el.innerHTML = html;
+                grid.appendChild(el);
+            });
+
+            const invSection = document.getElementById('inventorySection');
+            const invList = document.getElementById('inventoryList');
+            const invEntries = Object.entries(inventory).filter(([_, c]) => c > 0);
+
+            if (invEntries.length > 0) {
+                invSection.style.display = 'block';
+                invList.innerHTML = '';
+                invEntries.forEach(([id, count]) => {
+                    const item = getAllItems().find(i => i.id === id);
+                    if (item) {
+                        const tag = document.createElement('div');
+                        tag.className = 'inv-tag';
+                        tag.innerHTML = `<span>${item.emoji}</span> ${item.name} ×${count}`;
+                        invList.appendChild(tag);
+                    }
+                });
+            } else {
+                invSection.style.display = 'none';
+            }
+
+            document.getElementById('shopModal').classList.add('active');
+        }
+
+        function buyItem(itemId) {
+            const item = getAllItems().find(i => i.id === itemId);
+            if (!item) return;
+
+            if (coins < item.price) {
+                showToast('💸 金币不足，继续完成计划吧！');
+                return;
+            }
+
+            coins -= item.price;
+            inventory[itemId] = (inventory[itemId] || 0) + 1;
+            saveData();
+            showToast(`🛒 成功购买 ${item.name}！`, 'gold');
+            openShop();
+            document.getElementById('coinCount').textContent = coins;
+        }
+
+        // ===== Refund =====
+        function openRefund(itemId) {
+            const item = getAllItems().find(i => i.id === itemId);
+            if (!item || !inventory[itemId]) return;
+
+            pendingRefundItem = item;
+            const count = inventory[itemId];
+            document.getElementById('refundInfo').innerHTML = `
+                <div style="font-size: 3rem; margin-bottom: 8px;">${item.emoji}</div>
+                <div style="font-size: 1.1rem; font-weight: 600; color: var(--lavender-dark);">${item.name}</div>
+                <div style="font-size: 0.9rem; color: var(--text-light); margin-top: 4px;">当前拥有 ${count} 个 | 退款返还 🪙 ${item.price}</div>
+            `;
+            document.getElementById('refundModal').classList.add('active');
+        }
+
+        function confirmRefund() {
+            if (!pendingRefundItem) return;
+            const item = pendingRefundItem;
+
+            inventory[item.id]--;
+            if (inventory[item.id] <= 0) delete inventory[item.id];
+
+            coins += item.price;
+            saveData();
+            showToast(`↩️ 退款成功！返还 ${item.price} 金币`, 'refund');
+            closeModal('refundModal');
+            openShop();
+            document.getElementById('coinCount').textContent = coins;
+            pendingRefundItem = null;
+        }
+
+        // ===== Custom Item & AI Pricing =====
+        function openCustomItemModal() {
+            document.getElementById('customName').value = '';
+            document.getElementById('customDesc').value = '';
+            document.getElementById('aiPricingArea').style.display = 'none';
+            document.getElementById('aiResult').style.display = 'none';
+            document.getElementById('btnPrice').style.display = 'block';
+            document.getElementById('btnAdd').style.display = 'none';
+            selectedEmoji = '🎁';
+            updateEmojiSelection();
+            document.getElementById('customItemModal').classList.add('active');
+        }
+
+        function updateEmojiSelection() {
+            document.querySelectorAll('.emoji-option').forEach(el => {
+                el.classList.toggle('selected', el.dataset.emoji === selectedEmoji);
+            });
+        }
+
+        document.querySelectorAll('.emoji-option').forEach(el => {
+            el.addEventListener('click', () => {
+                selectedEmoji = el.dataset.emoji;
+                updateEmojiSelection();
+            });
+        });
+
+        function generateAIPrice(name, desc) {
+            const combined = (name + desc).toLowerCase();
+            let basePrice = 80;
+            basePrice += name.length * 8;
+            basePrice += desc.length * 3;
+
+            const rareKeywords = ['限量','稀有','珍藏','绝版','传说','史诗','限定','独家','手工','定制','签名','古董','宝石','钻石','黄金','水晶'];
+            const luxuryKeywords = ['豪华','奢华','高级','顶级','至尊','皇室','贵族','名牌','设计师','进口'];
+            const cozyKeywords = ['温暖','治愈','舒适','柔软','香甜','可爱','萌','温馨','安心','放松'];
+
+            let rarityScore = 0;
+            rareKeywords.forEach(k => { if (combined.includes(k)) rarityScore += 45; });
+            luxuryKeywords.forEach(k => { if (combined.includes(k)) rarityScore += 35; });
+            cozyKeywords.forEach(k => { if (combined.includes(k)) rarityScore += 15; });
+
+            basePrice += rarityScore;
+
+            const rareEmojis = ['💎','🔮','👑','🦄','🐉'];
+            if (rareEmojis.includes(selectedEmoji)) basePrice += 50;
+
+            const fluctuation = 0.9 + Math.random() * 0.25;
+            basePrice = Math.floor(basePrice * fluctuation);
+            basePrice = Math.max(80, basePrice);
+            basePrice = Math.round(basePrice / 5) * 5;
+
+            return basePrice;
+        }
+
+        function generateAIReason(name, desc, price) {
+            const reasons = [];
+            const combined = (name + desc).toLowerCase();
+
+            if (price > 500) reasons.push('该商品属于高端品类，AI检测到其具有收藏价值和稀缺性');
+            else if (price > 300) reasons.push('商品品质优良，属于中高档消费品，性价比较高');
+            else reasons.push('入门级好物，价格亲民，适合日常奖励自己');
+
+            if (desc.length > 20) reasons.push('详细描述体现了商品的独特性和用心程度');
+            if (name.length > 6) reasons.push('名称富有创意，市场辨识度较高');
+
+            if (/限量|稀有|珍藏|绝版/.test(combined)) reasons.push('关键词触发「稀有度溢价」加成');
+            if (/手工|定制|签名/.test(combined)) reasons.push('人工成本与个性化价值被纳入定价模型');
+            if (/温暖|治愈|舒适/.test(combined)) reasons.push('情感价值系数 +15%，治愈系商品需求稳定');
+
+            reasons.push(`最终估价：${price} 金币，符合当前市场汇率`);
+
+            return reasons.join('；');
+        }
+
+        function startAIPricing() {
+            const name = document.getElementById('customName').value.trim();
+            const desc = document.getElementById('customDesc').value.trim();
+
+            if (!name) {
+                showToast('请先输入商品名称');
+                return;
+            }
+
+            document.getElementById('aiPricingArea').style.display = 'block';
+            document.getElementById('aiThinking').style.display = 'block';
+            document.getElementById('aiResult').style.display = 'none';
+            document.getElementById('btnPrice').style.display = 'none';
+
+            setTimeout(() => {
+                currentAIPrice = generateAIPrice(name, desc);
+                const reason = generateAIReason(name, desc, currentAIPrice);
+
+                document.getElementById('aiThinking').style.display = 'none';
+                document.getElementById('aiResult').style.display = 'block';
+                document.getElementById('aiPrice').textContent = `${currentAIPrice} 🪙`;
+                document.getElementById('aiReason').textContent = reason;
+                document.getElementById('btnAdd').style.display = 'block';
+            }, 1500 + Math.random() * 1000);
+        }
+
+        function addCustomItem() {
+            const name = document.getElementById('customName').value.trim();
+            const desc = document.getElementById('customDesc').value.trim() || '用户自定义商品';
+
+            if (!name) return;
+
+            const newItem = {
+                id: 'custom_' + Date.now(),
+                emoji: selectedEmoji,
+                name: name,
+                desc: desc,
+                price: currentAIPrice,
+                isDefault: false
+            };
+
+            customItems.push(newItem);
+            saveData();
+            showToast(`✨ 商品「${name}」已上架！定价 ${currentAIPrice} 金币`, 'gold');
+            closeModal('customItemModal');
+            openShop();
+        }
+
+        function deleteCustomItem(id) {
+            if (!confirm('确定要删除这个自定义商品吗？已购买记录也会被清除。')) return;
+            customItems = customItems.filter(i => i.id !== id);
+            delete inventory[id];
+            saveData();
+            openShop();
+            showToast('商品已下架');
+        }
+
+        // ===== Utilities =====
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = 'toast' + (type ? ' ' + type : '');
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function saveData() {
+            localStorage.setItem('lavenderCalendar', JSON.stringify(calendarData));
+            localStorage.setItem('lavenderCoins', coins);
+            localStorage.setItem('lavenderInventory', JSON.stringify(inventory));
+            localStorage.setItem('lavenderCustomItems', JSON.stringify(customItems));
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.classList.remove('active');
+            });
+        });
+
+        renderCalendar();
+    </script>
+</body>
+</html>
